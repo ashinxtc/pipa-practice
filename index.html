@@ -9,158 +9,786 @@
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <style>
         :root {
-            --primary: #4CAF50;
-            --primary-glow: rgba(76, 175, 80, 0.6);
-            --bg-dark: #0f0f13;
-            --bg-panel: #1a1a20;
-            --text-main: #ffffff;
-            --text-muted: #8a8a93;
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --primary-dark: #4f46e5;
+            --primary-glow: rgba(99, 102, 241, 0.4);
+            --accent: #f472b6;
+            --accent-glow: rgba(244, 114, 182, 0.4);
+            --success: #10b981;
+            --success-glow: rgba(16, 185, 129, 0.4);
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --bg-dark: #0a0a0f;
+            --bg-darker: #050507;
+            --bg-panel: rgba(20, 20, 30, 0.8);
+            --bg-card: rgba(30, 30, 45, 0.6);
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-glow: rgba(99, 102, 241, 0.3);
         }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
+
+        * {
             margin: 0;
-            padding: 20px;
-            display: flex;
-            justify-content: center;
+            padding: 0;
+            box-sizing: border-box;
         }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg-darker);
+            background-image: 
+                radial-gradient(ellipse at 20% 20%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+                radial-gradient(ellipse at 80% 80%, rgba(244, 114, 182, 0.1) 0%, transparent 50%),
+                radial-gradient(ellipse at 50% 50%, rgba(99, 102, 241, 0.05) 0%, transparent 70%);
+            color: var(--text-main);
+            min-height: 100vh;
+            padding: 30px 20px;
+            line-height: 1.6;
+        }
+
         .app-container {
             width: 100%;
-            max-width: 900px;
+            max-width: 920px;
+            margin: 0 auto;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 24px;
         }
-        .panel {
-            background-color: var(--bg-panel);
-            border-radius: 16px;
-            padding: 25px;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.4);
-            border: 1px solid rgba(255,255,255,0.05);
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid rgba(255,255,255,0.1);
-            padding-bottom: 15px;
-            margin-bottom: 20px;
-        }
-        h1 { margin: 0; font-size: 26px; color: var(--primary); letter-spacing: 1px;}
-        
-        .controls-row {
-            display: flex;
-            gap: 15px;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-        }
-        button {
-            background: linear-gradient(145deg, #4CAF50, #45a049);
-            color: white;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            letter-spacing: 0.5px;
-            transition: all 0.2s ease;
-            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
-        }
-        button:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4); }
-        button:disabled { background: #333; color: #666; cursor: not-allowed; transform: none; box-shadow: none; }
-        
-        .btn-ai {
-            background: linear-gradient(135deg, #6e8efb, #a777e3);
-            box-shadow: 0 4px 15px rgba(167, 119, 227, 0.4);
-        }
-        .btn-ai:hover { box-shadow: 0 6px 20px rgba(167, 119, 227, 0.5); }
-        
-        .ai-panel {
-            background: rgba(167, 119, 227, 0.08);
-            border: 1px solid rgba(167, 119, 227, 0.2);
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 25px;
-            font-size: 15px;
-            line-height: 1.7;
+
+        /* Header */
+        .header-section {
+            text-align: center;
+            padding: 30px 20px;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(244, 114, 182, 0.05) 100%);
+            border-radius: 24px;
+            border: 1px solid var(--border-subtle);
+            backdrop-filter: blur(20px);
             position: relative;
             overflow: hidden;
         }
-        .ai-panel::before {
-            content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%;
-            background: linear-gradient(to bottom, #6e8efb, #a777e3);
-        }
-        .ai-panel h4 { margin-top: 0; color: #bca0eb; display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 18px; }
 
+        /* 底层：柔和极光色块缓慢漂移，始终在卡片内完整可见 */
+        .header-section::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: inherit;
+            background:
+                radial-gradient(ellipse 120% 90% at 15% 25%, rgba(129, 140, 248, 0.28) 0%, transparent 58%),
+                radial-gradient(ellipse 100% 80% at 88% 72%, rgba(244, 114, 182, 0.2) 0%, transparent 52%),
+                radial-gradient(ellipse 70% 60% at 50% 100%, rgba(99, 102, 241, 0.12) 0%, transparent 45%);
+            animation: headerAurora 12s ease-in-out infinite alternate;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* 上层：宽幅斜向高光带横向扫过，避免 conic 旋转被圆角裁成“缺一块” */
+        .header-section::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 85%;
+            height: 220%;
+            margin: -110% 0 0 -42.5%;
+            background: linear-gradient(
+                92deg,
+                transparent 0%,
+                transparent 38%,
+                rgba(255, 255, 255, 0.04) 44%,
+                rgba(224, 231, 255, 0.18) 48.5%,
+                rgba(253, 186, 255, 0.14) 50%,
+                rgba(196, 181, 253, 0.16) 51.5%,
+                rgba(255, 255, 255, 0.05) 56%,
+                transparent 62%,
+                transparent 100%
+            );
+            transform: rotate(22deg) translate3d(-220%, 0, 0);
+            filter: blur(0.8px);
+            animation: headerSheenSweep 6.5s cubic-bezier(0.45, 0, 0.25, 1) infinite;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        @keyframes headerAurora {
+            0% {
+                opacity: 0.75;
+                transform: scale(1) translate3d(0, 0, 0);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1.06) translate3d(2.5%, -2%, 0);
+            }
+        }
+
+        @keyframes headerSheenSweep {
+            0% {
+                transform: rotate(22deg) translate3d(-220%, 0, 0);
+                opacity: 0.35;
+            }
+            12% {
+                opacity: 0.95;
+            }
+            88% {
+                opacity: 0.95;
+            }
+            100% {
+                transform: rotate(22deg) translate3d(220%, 0, 0);
+                opacity: 0.35;
+            }
+        }
+
+        .header-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+            display: inline-block;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+
+        h1 { 
+            font-size: 32px; 
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 14px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        /* Panel */
+        .panel {
+            background: var(--bg-panel);
+            border-radius: 20px;
+            padding: 28px;
+            backdrop-filter: blur(30px);
+            border: 1px solid var(--border-subtle);
+            box-shadow: 
+                0 20px 60px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            transition: all 0.3s ease;
+        }
+
+        .panel:hover {
+            border-color: var(--border-glow);
+            box-shadow: 
+                0 25px 70px rgba(0, 0, 0, 0.6),
+                0 0 40px rgba(99, 102, 241, 0.1),
+                inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 24px;
+            background: linear-gradient(180deg, var(--primary) 0%, var(--accent) 100%);
+            border-radius: 2px;
+        }
+
+        /* Buttons — 统一骨架 + 变体色 */
+        .btn {
+            -webkit-appearance: none;
+            appearance: none;
+            font-family: inherit;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 46px;
+            padding: 0 22px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 14px;
+            letter-spacing: 0.02em;
+            cursor: pointer;
+            border: 1px solid transparent;
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.22s cubic-bezier(0.4, 0, 0.2, 1),
+                box-shadow 0.22s ease,
+                border-color 0.22s ease,
+                background 0.22s ease,
+                color 0.22s ease,
+                opacity 0.22s ease;
+        }
+
+        .btn-shine::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.18), transparent);
+            transition: left 0.55s ease;
+            pointer-events: none;
+        }
+
+        .btn-shine:hover::before {
+            left: 100%;
+        }
+
+        .btn-primary {
+            color: #fff;
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-dark) 100%);
+            border-color: rgba(129, 140, 248, 0.35);
+            box-shadow: 0 4px 22px var(--primary-glow), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(99, 102, 241, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+        }
+
+        /* 次要操作：深色玻璃面，与面板一体 */
+        .btn-secondary {
+            color: rgba(241, 245, 249, 0.95);
+            background: linear-gradient(180deg, rgba(42, 42, 58, 0.92) 0%, rgba(24, 24, 38, 0.96) 100%);
+            border-color: rgba(255, 255, 255, 0.11);
+            box-shadow: 0 2px 14px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            transform: translateY(-2px);
+            border-color: rgba(129, 140, 248, 0.4);
+            box-shadow: 0 6px 28px rgba(99, 102, 241, 0.18), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        .btn-ai {
+            color: #fff;
+            background: linear-gradient(135deg, #f472b6 0%, #a855f7 55%, #7c3aed 100%);
+            border-color: rgba(244, 114, 182, 0.35);
+            box-shadow: 0 4px 22px var(--accent-glow), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+        }
+
+        .btn-ai:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 32px rgba(168, 85, 247, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+        }
+
+        .btn-ghost {
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.03);
+            border-color: rgba(255, 255, 255, 0.1);
+            box-shadow: none;
+        }
+
+        .btn-ghost:hover:not(:disabled) {
+            background: rgba(99, 102, 241, 0.12);
+            border-color: rgba(129, 140, 248, 0.35);
+            color: var(--primary-light);
+        }
+
+        .btn-icon {
+            min-width: 46px;
+            width: 46px;
+            padding: 0;
+            border-radius: 12px;
+            font-size: 18px;
+        }
+
+        .btn-block {
+            width: 100%;
+        }
+
+        .btn:disabled {
+            cursor: not-allowed;
+            transform: none !important;
+            opacity: 0.42;
+            box-shadow: none !important;
+        }
+
+        .btn:disabled::before {
+            display: none;
+        }
+
+        /* Controls */
+        .controls-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .input-field {
+            background: rgba(15, 15, 25, 0.8);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            padding: 12px 18px;
+            min-height: 46px;
+            color: var(--text-main);
+            font-size: 15px;
+            transition: all 0.3s ease;
+            width: 100%;
+        }
+
+        .input-field:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+
+        .input-field::placeholder {
+            color: var(--text-muted);
+        }
+
+        /* AI Panel */
+        .ai-panel {
+            background: linear-gradient(135deg, rgba(244, 114, 182, 0.08) 0%, rgba(99, 102, 241, 0.05) 100%);
+            border: 1px solid rgba(244, 114, 182, 0.2);
+            border-radius: 16px;
+            padding: 24px;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .ai-panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(180deg, var(--accent) 0%, var(--primary) 100%);
+        }
+
+        .ai-panel h4 {
+            margin-top: 0;
+            color: var(--accent);
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+
+        .ai-panel .advice-text {
+            color: var(--text-main);
+            line-height: 1.8;
+            font-size: 15px;
+        }
+
+        .ai-suggestion {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 12px;
+        }
+
+        .ai-suggestion-title {
+            color: var(--success);
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Game Area */
         .game-area {
             position: relative;
             width: 100%;
-            height: 220px;
-            background: linear-gradient(to bottom, #0a0a0c, #111115);
-            border-radius: 12px;
-            border: 1px solid rgba(255,255,255,0.08);
+            height: 240px;
+            background: linear-gradient(180deg, #0a0a10 0%, #12121a 100%);
+            border-radius: 16px;
+            border: 1px solid var(--border-subtle);
             overflow: hidden;
-            margin-top: 15px;
-            box-shadow: inset 0 0 40px rgba(0,0,0,0.8);
+            margin: 20px 0;
+            box-shadow: 
+                inset 0 0 60px rgba(0, 0, 0, 0.8),
+                0 0 30px rgba(99, 102, 241, 0.1);
         }
+
         canvas { display: block; width: 100%; height: 100%; }
-        
+
         .hud {
             position: absolute;
-            top: 15px;
-            right: 25px;
+            top: 20px;
+            right: 30px;
             text-align: right;
             pointer-events: none;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
         }
-        .score { font-size: 32px; font-weight: 900; color: #FFD700; font-family: monospace; letter-spacing: 2px;}
-        .combo { font-size: 18px; color: #4CAF50; font-weight: bold; margin-top: -5px;}
-        .express-score { font-size: 14px; color: #a777e3; margin-top: 5px; }
-        
+
+        .score { 
+            font-size: 36px; 
+            font-weight: 900; 
+            color: #FFD700; 
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            letter-spacing: 3px;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+
+        .combo { 
+            font-size: 16px; 
+            color: var(--success); 
+            font-weight: 700;
+            margin-top: -4px;
+            letter-spacing: 2px;
+        }
+
+        .express-score { 
+            font-size: 13px; 
+            color: var(--accent); 
+            margin-top: 6px;
+        }
+
         .judgement-text {
             position: absolute;
             top: 50%;
             left: 20%;
             transform: translate(-50%, -50%);
-            font-size: 54px;
+            font-size: 56px;
             font-weight: 900;
             font-style: italic;
             text-transform: uppercase;
             pointer-events: none;
             opacity: 0;
-            text-shadow: 0 0 20px rgba(0,0,0,0.9);
             z-index: 10;
         }
-        .anim-perfect { color: #00FFFF; text-shadow: 0 0 20px #00FFFF, 0 0 40px #00FFFF; animation: popFade 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; }
-        .anim-great { color: #4CAF50; text-shadow: 0 0 20px #4CAF50; animation: popFade 0.5s ease-out forwards; }
-        .anim-miss { color: #F44336; animation: dropFade 0.5s ease-in forwards; }
+
+        .anim-perfect { 
+            color: #00FFFF; 
+            text-shadow: 0 0 30px #00FFFF, 0 0 60px #00FFFF; 
+            animation: popFade 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards; 
+        }
+
+        .anim-great { 
+            color: var(--success); 
+            text-shadow: 0 0 30px var(--success);
+            animation: popFade 0.5s ease-out forwards; 
+        }
+
+        .anim-miss { 
+            color: var(--danger); 
+            animation: dropFade 0.5s ease-in forwards; 
+        }
 
         @keyframes popFade {
             0% { opacity: 0; transform: translate(-50%, -50%) scale(0.3); }
             30% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
             100% { opacity: 0; transform: translate(-50%, -60%) scale(0.9); }
         }
+
         @keyframes dropFade {
             0% { opacity: 1; transform: translate(-50%, -50%) scale(1); }
             100% { opacity: 0; transform: translate(-50%, -20%) scale(0.8); }
         }
 
+        /* Log Box */
         .log-box {
-            background: #050505;
-            padding: 12px;
-            font-family: 'Courier New', Courier, monospace;
-            color: #4CAF50;
+            background: rgba(5, 5, 10, 0.9);
+            padding: 14px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            color: var(--success);
             font-size: 12px;
-            border-radius: 8px;
-            height: 120px;
+            border-radius: 10px;
+            height: 100px;
             overflow-y: auto;
-            border: 1px solid #222;
-            line-height: 1.5;
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            line-height: 1.6;
         }
-        .media-container { width: 100%; border-radius: 8px; overflow: hidden; background: #000; display: flex; justify-content: center; min-height: 100px; margin-bottom: 20px;}
-        video { width: 100%; max-height: 300px; }
+
+        .log-box::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .log-box::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .log-box::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 3px;
+        }
+
+        /* Media Container */
+        .media-container {
+            width: 100%;
+            border-radius: 12px;
+            overflow: hidden;
+            background: #000;
+            display: flex;
+            justify-content: center;
+            min-height: 80px;
+            margin-bottom: 20px;
+        }
+
+        video { width: 100%; max-height: 280px; }
         audio { width: 90%; margin: 20px 0; }
+
+        /* Settings Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal {
+            background: var(--bg-panel);
+            border-radius: 24px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+            border: 1px solid var(--border-subtle);
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 28px;
+        }
+
+        .modal-title {
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .modal-close {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.05);
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            transition: all 0.2s;
+        }
+
+        .modal-close:hover {
+            background: rgba(239, 68, 68, 0.2);
+            color: var(--danger);
+        }
+
+        .settings-section {
+            margin-bottom: 24px;
+        }
+
+        .settings-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .api-input-wrapper {
+            position: relative;
+        }
+
+        .api-input {
+            width: 100%;
+            padding: 14px 50px 14px 18px;
+            background: rgba(15, 15, 25, 0.9);
+            border: 1px solid var(--border-subtle);
+            border-radius: 12px;
+            color: var(--text-main);
+            font-size: 14px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            transition: all 0.3s ease;
+        }
+
+        .api-input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary-glow);
+        }
+
+        .api-input::placeholder {
+            color: var(--text-muted);
+            font-family: 'Inter', sans-serif;
+        }
+
+        .toggle-visibility {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px;
+            transition: color 0.2s;
+        }
+
+        .toggle-visibility:hover {
+            color: var(--primary-light);
+        }
+
+        .help-text {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 10px;
+            line-height: 1.6;
+        }
+
+        .help-text a {
+            color: var(--primary-light);
+            text-decoration: none;
+        }
+
+        .help-text a:hover {
+            text-decoration: underline;
+        }
+
+        .save-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 12px;
+            font-size: 13px;
+            color: var(--success);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .save-status.visible {
+            opacity: 1;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            margin-top: 28px;
+        }
+
+        .modal-actions .btn {
+            flex: 1;
+        }
+
+        /* API 状态：标签感，避免与主按钮抢视觉 */
+        .status-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 0 14px;
+            min-height: 34px;
+            border-radius: 10px;
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            background: rgba(15, 15, 22, 0.65);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            color: var(--text-muted);
+        }
+
+        .status-badge.configured {
+            color: rgba(52, 211, 153, 0.95);
+            border-color: rgba(16, 185, 129, 0.22);
+            background: rgba(16, 185, 129, 0.08);
+        }
+
+        .status-badge.not-configured {
+            color: rgba(251, 191, 36, 0.9);
+            border-color: rgba(245, 158, 11, 0.22);
+            background: rgba(245, 158, 11, 0.06);
+        }
+
+        .status-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .status-dot.green {
+            background: var(--success);
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.55);
+        }
+
+        .status-dot.yellow {
+            background: var(--warning);
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.45);
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            body { padding: 15px; }
+            .panel { padding: 20px; }
+            h1 { font-size: 24px; }
+            .logo-icon { font-size: 36px; }
+            .modal { padding: 24px; }
+        }
+
+        /* Loading spinner */
+        .spinner {
+            width: 20px;
+            height: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: inline-block;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
     </style>
 </head>
 <body>
@@ -523,10 +1151,98 @@
                     <div className="hud">
                         <div className="score">{score}</div>
                         <div className="combo">{combo > 0 ? `${combo} COMBO` : ''}</div>
-                        {expressScore > 0 && <div className="express-score">🎵 表现力加分 +{expressScore}</div>}
+                        {expressScore > 0 && <div className="express-score">+{expressScore}</div>}
                     </div>
                     <div key={judgement.id} className={`judgement-text ${judgement.type}`}>
                         {judgement.text}
+                    </div>
+                </div>
+            );
+        };
+
+        // Settings Modal Component
+        const SettingsModal = ({ isOpen, onClose, apiKey, setApiKey, onSave }) => {
+            const [localApiKey, setLocalApiKey] = useState(apiKey);
+            const [showKey, setShowKey] = useState(false);
+            const [showSaved, setShowSaved] = useState(false);
+
+            useEffect(() => {
+                setLocalApiKey(apiKey);
+            }, [apiKey]);
+
+            const handleSave = () => {
+                const trimmedKey = localApiKey.trim();
+                if (trimmedKey) {
+                    localStorage.setItem('pipa_app_gemini_api_key', trimmedKey);
+                    setApiKey(trimmedKey);
+                    setShowSaved(true);
+                    setTimeout(() => setShowSaved(false), 2000);
+                    if (onSave) onSave(trimmedKey);
+                }
+            };
+
+            const handleClear = () => {
+                localStorage.removeItem('pipa_app_gemini_api_key');
+                setLocalApiKey('');
+                setApiKey('');
+                setShowSaved(true);
+                setTimeout(() => setShowSaved(false), 2000);
+            };
+
+            if (!isOpen) return null;
+
+            return (
+                <div className="modal-overlay" onClick={onClose}>
+                    <div className="modal" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h2 className="modal-title">
+                                <span>⚙️</span>
+                                API 设置
+                            </h2>
+                            <button type="button" className="modal-close" onClick={onClose} aria-label="关闭">×</button>
+                        </div>
+
+                        <div className="settings-section">
+                            <label className="settings-label">
+                                <span>🔑</span>
+                                Google Gemini API Key
+                            </label>
+                            <div className="api-input-wrapper">
+                                <input
+                                    type={showKey ? 'text' : 'password'}
+                                    className="api-input"
+                                    value={localApiKey}
+                                    onChange={e => setLocalApiKey(e.target.value)}
+                                    placeholder="输入你的 Gemini API Key..."
+                                    autoComplete="off"
+                                    spellCheck="false"
+                                />
+                                <button
+                                    type="button"
+                                    className="toggle-visibility"
+                                    onClick={() => setShowKey(!showKey)}
+                                    title={showKey ? '隐藏' : '显示'}
+                                >
+                                    {showKey ? '👁️' : '👁️‍🗨️'}
+                                </button>
+                            </div>
+                            <p className="help-text">
+                                此 Key 仅存储在您的浏览器本地 (localStorage)，不会上传至任何服务器。<br/>
+                                获取方式：访问 <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer">Google AI Studio</a> 免费申请。
+                            </p>
+                            <div className={`save-status ${showSaved ? 'visible' : ''}`}>
+                                <span>✓</span> 设置已保存
+                            </div>
+                        </div>
+
+                        <div className="modal-actions">
+                            <button type="button" className="btn btn-ghost" onClick={handleClear}>
+                                清除
+                            </button>
+                            <button type="button" className="btn btn-primary btn-shine" onClick={handleSave}>
+                                保存设置
+                            </button>
+                        </div>
                     </div>
                 </div>
             );
@@ -550,7 +1266,19 @@
             const [minGap, setMinGap] = useState(60);
             const [aiHasSuggested, setAiHasSuggested] = useState(false);
 
+            // API Key State
+            const [apiKey, setApiKey] = useState('');
+            const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
             const addLog = (msg) => setLogs(prev => [msg, ...prev].slice(0, 8));
+
+            // Load API Key from localStorage on mount
+            useEffect(() => {
+                const savedKey = localStorage.getItem('pipa_app_gemini_api_key');
+                if (savedKey) {
+                    setApiKey(savedKey);
+                }
+            }, []);
 
             useEffect(() => {
                 const workerScript = document.getElementById('worker-script').textContent;
@@ -622,10 +1350,16 @@
 
             const fetchAIAdvice = async () => {
                 if (!pieceName) return;
-                setIsAiLoading(true); setAiResponse('');
-                const apiKey = ""; 
                 
-                // 【核心修改】将模型指定为标准的 gemini-2.5-flash，解决地区访问权限或预览模型受限问题
+                // Check if API Key is configured
+                if (!apiKey) {
+                    setIsSettingsOpen(true);
+                    setAiResponse('请先配置 Gemini API Key 才能使用 AI 功能。');
+                    return;
+                }
+
+                setIsAiLoading(true); setAiResponse('');
+                
                 const modelName = "gemini-2.5-flash"; 
                 const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
@@ -645,7 +1379,6 @@
                         })
                     });
                     
-                    // 【核心修改】捕获详细的 HTTP 错误码
                     if (!res.ok) {
                         const errData = await res.json().catch(() => ({}));
                         throw new Error(`网络或授权异常 (状态码: ${res.status}) ${errData.error?.message || ''}`);
@@ -660,9 +1393,11 @@
                     setAiHasSuggested(true);
                     addLog(`✨ AI 调参 -> 灵敏度: ${parsed.recommendedSensitivity}, 间隔: ${parsed.recommendedMinGap}ms`);
                 } catch (err) {
-                    // 更直观的报错提示，帮助判断是否被网络防火墙阻挡
                     if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
-                        setAiResponse(`网络连接失败！因为 Google 的服务器在国内无法直接访问。请检查你的设备是否已经开启了全局科学上网代理（Global Proxy）。`);
+                        setAiResponse(`网络连接失败！Google 服务器在国内可能无法直接访问。请检查网络或使用代理。`);
+                    } else if (err.message.includes('401') || err.message.includes('403')) {
+                        setAiResponse(`API Key 无效或权限不足。请检查 API Key 是否正确，或前往设置重新配置。`);
+                        addLog(`⚠️ API Key 可能已失效，请重新配置`);
                     } else {
                         setAiResponse(`AI 老师遇到了一点小麻烦：${err.message}`);
                     }
@@ -670,33 +1405,84 @@
                 } finally { setIsAiLoading(false); }
             };
 
+            const hasApiKey = apiKey && apiKey.length > 0;
+
             return (
                 <div className="app-container">
-                    <div className="panel">
-                        <div className="header">
-                            <h1>🎵 琵琶练习台 Pro <span style={{fontSize:'12px', color:'#a777e3'}}>动态力度追踪版</span></h1>
+                    {/* Header */}
+                    <div className="header-section">
+                        <div className="header-content">
+                            <div className="logo-icon">🎵</div>
+                            <h1>琵琶练习台</h1>
+                            <p className="subtitle">动态力度追踪版</p>
                         </div>
+                    </div>
+
+                    {/* Settings Button */}
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                        <button
+                            type="button"
+                            className="btn btn-ghost btn-icon"
+                            onClick={() => setIsSettingsOpen(true)}
+                            title="API 设置"
+                            aria-label="打开 API 设置"
+                        >
+                            ⚙️
+                        </button>
+                    </div>
+
+                    {/* Main Panel */}
+                    <div className="panel">
+                        <h3 className="section-title">开始练习</h3>
 
                         <div className="controls-row">
                             <input type="file" accept="video/*, audio/*, .mp3, .mp4, .wav, .m4a, .mov, .aac" onChange={handleFileUpload} ref={fileInputRef} style={{display: 'none'}} />
-                            <button onClick={() => fileInputRef.current.click()}>📂 1. 加载练习曲目 (视/音频)</button>
+                            <button type="button" className="btn btn-secondary" onClick={() => fileInputRef.current.click()}>
+                                <span aria-hidden="true">📂</span>
+                                加载练习曲目
+                            </button>
+                            <span className={`status-badge ${hasApiKey ? 'configured' : 'not-configured'}`} role="status">
+                                <span className={`status-dot ${hasApiKey ? 'green' : 'yellow'}`} aria-hidden="true"></span>
+                                {hasApiKey ? 'API 已配置' : 'API 未配置'}
+                            </span>
                         </div>
                         
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '20px' }}>
-                            <input type="text" value={pieceName} onChange={(e) => { setPieceName(e.target.value); setAiHasSuggested(false); }} placeholder="输入曲目名称..." style={{ padding: '12px', borderRadius: '8px', border: '1px solid #333', background: '#111', color: 'white', flex: 1, minWidth: '200px' }} />
-                            <button className="btn-ai" onClick={fetchAIAdvice} disabled={isAiLoading || !pieceName}>
-                                {isAiLoading ? '✨ 分析中...' : '✨ 召唤 AI 老师指导与调参'}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: '24px' }}>
+                            <input 
+                                type="text" 
+                                value={pieceName} 
+                                onChange={(e) => { setPieceName(e.target.value); setAiHasSuggested(false); }} 
+                                placeholder="输入曲目名称..." 
+                                className="input-field"
+                                style={{ flex: 1, minWidth: '200px' }}
+                            />
+                            <button
+                                type="button"
+                                className="btn btn-ai btn-shine"
+                                onClick={fetchAIAdvice}
+                                disabled={isAiLoading || !pieceName}
+                            >
+                                {isAiLoading ? (
+                                    <><span className="spinner"></span> 分析中...</>
+                                ) : (
+                                    <>✨ AI 智能调参</>
+                                )}
                             </button>
                         </div>
 
                         {aiResponse && (
                             <div className="ai-panel">
                                 <h4>✨ AI 课前寄语</h4>
-                                <div style={{ whiteSpace: 'pre-wrap' }}>{aiResponse}</div>
+                                <div className="advice-text" style={{ whiteSpace: 'pre-wrap' }}>{aiResponse}</div>
                                 {aiHasSuggested && fileInfo.rawFile && (
-                                    <div style={{ marginTop: '15px', padding: '15px', background: 'rgba(76, 175, 80, 0.1)', border: '1px solid rgba(76, 175, 80, 0.3)', borderRadius: '8px' }}>
-                                        <div style={{ color: '#4CAF50', marginBottom: '10px', fontSize: '13px' }}>💡 已应用《{pieceName}》专属提取参数。</div>
-                                        <button style={{ width: '100%' }} onClick={applyAiParamsAndRegenerate}>🚀 立即按新参数重新生成谱面</button>
+                                    <div className="ai-suggestion">
+                                        <div className="ai-suggestion-title">
+                                            💡 已应用《{pieceName}》专属提取参数
+                                        </div>
+                                        <button type="button" className="btn btn-secondary btn-block" onClick={applyAiParamsAndRegenerate}>
+                                            <span aria-hidden="true">🚀</span>
+                                            立即按新参数重新生成谱面
+                                        </button>
                                     </div>
                                 )}
                             </div>
@@ -715,11 +1501,21 @@
                             <RibbonGameArea mediaRef={mediaRef} beatmapData={beatmapData} isPlaying={isPlaying} />
                         )}
 
-                        <div style={{marginTop: '25px'}}>
-                            <div style={{fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px', letterSpacing: '1px'}}>SYSTEM LOGS {isAnalyzing && "⚙️"}</div>
+                        <div style={{marginTop: '28px'}}>
+                            <div style={{fontSize: '11px', color: 'var(--text-muted)', marginBottom: '10px', letterSpacing: '2px', textTransform: 'uppercase'}}>
+                                System Logs {isAnalyzing && "⚙️"}
+                            </div>
                             <div className="log-box">{logs.map((log, i) => <div key={i}>&gt; {log}</div>)}</div>
                         </div>
                     </div>
+
+                    {/* Settings Modal */}
+                    <SettingsModal 
+                        isOpen={isSettingsOpen}
+                        onClose={() => setIsSettingsOpen(false)}
+                        apiKey={apiKey}
+                        setApiKey={setApiKey}
+                    />
                 </div>
             );
         }

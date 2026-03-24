@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>熙熙的琵琶练习台 - 动态力度版</title>
+    <title>琵琶练习台 - 动态力度版</title>
     <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -93,11 +93,10 @@
         }
         .ai-panel h4 { margin-top: 0; color: #bca0eb; display: flex; align-items: center; gap: 8px; margin-bottom: 12px; font-size: 18px; }
 
-        /* 游戏区域 - 深度与质感 */
         .game-area {
             position: relative;
             width: 100%;
-            height: 220px; /* 稍微加高以容纳波带 */
+            height: 220px;
             background: linear-gradient(to bottom, #0a0a0c, #111115);
             border-radius: 12px;
             border: 1px solid rgba(255,255,255,0.08);
@@ -117,7 +116,7 @@
         }
         .score { font-size: 32px; font-weight: 900; color: #FFD700; font-family: monospace; letter-spacing: 2px;}
         .combo { font-size: 18px; color: #4CAF50; font-weight: bold; margin-top: -5px;}
-        .express-score { font-size: 14px; color: #a777e3; margin-top: 5px; } /* 表现力加分显示 */
+        .express-score { font-size: 14px; color: #a777e3; margin-top: 5px; }
         
         .judgement-text {
             position: absolute;
@@ -167,7 +166,6 @@
 <body>
     <div id="root"></div>
 
-    <!-- Web Worker：计算时间戳 (Onsets) 和 能量包络 (Energy Envelope) -->
     <script id="worker-script" type="javascript/worker">
         self.onerror = function(err) { self.postMessage({ status: 'error', msg: '后台分析线程异常' }); };
 
@@ -179,11 +177,10 @@
                 const analyzeAudio = (audio, sr) => {
                     const windowSize = 1024, hopSize = 512;
                     const energies = [], energyFlux = [], onsets = [];
-                    let maxEnergy = 0; // 记录全局最大能量用于归一化
+                    let maxEnergy = 0; 
 
                     self.postMessage({ status: 'info', msg: '⚙️ 正在提取能量波带数据...' });
 
-                    // 1. 计算每个窗口的 RMS 能量 (构成能量包络)
                     for (let i = 0; i < audio.length - windowSize; i += hopSize) {
                         let sum = 0;
                         for (let j = 0; j < windowSize; j++) sum += audio[i + j] * audio[i + j];
@@ -192,14 +189,12 @@
                         if (rms > maxEnergy) maxEnergy = rms;
                     }
 
-                    // 2. 计算能量通量 (用于找音头)
                     for (let i = 1; i < energies.length; i++) {
                         let diff = energies[i] - energies[i-1];
                         energyFlux.push(diff > 0 ? diff : 0);
                     }
                     energyFlux.unshift(0);
 
-                    // 3. 找音头 (Onsets)
                     const meanWindow = 15;
                     const minOnsetGapFrames = Math.floor((minGapMs / 1000) * sr / hopSize);
                     let lastOnsetFrame = -minOnsetGapFrames;
@@ -212,26 +207,22 @@
 
                             if (energyFlux[i] > localMean * sensitivity && energyFlux[i] > 0.005) {
                                 if (i - lastOnsetFrame >= minOnsetGapFrames) {
-                                    onsets.push(((i * hopSize) / sr) * 1000); // 毫秒
+                                    onsets.push(((i * hopSize) / sr) * 1000); 
                                     lastOnsetFrame = i;
                                 }
                             }
                         }
                     }
 
-                    // 4. 归一化能量包络并大幅度下采样 (减小数据量，用于绘制波带)
-                    // 每秒取大约 10 个点 (约100ms一个点) 就足够绘制平滑曲线了
                     const envSampleRate = 10; 
                     const envHopFrames = Math.floor(sr / hopSize / envSampleRate);
                     const envelope = [];
                     
                     for (let i = 0; i < energies.length; i += envHopFrames) {
-                        // 取局部最大值作为这个小块的代表能量，防止波带过于剧烈抖动
                         let localMax = 0;
                         for(let j = 0; j < envHopFrames && (i+j) < energies.length; j++){
                             if(energies[i+j] > localMax) localMax = energies[i+j];
                         }
-                        // 归一化到 0.0 - 1.0 之间
                         envelope.push({
                             time: ((i * hopSize) / sr) * 1000,
                             intensity: maxEnergy > 0 ? (localMax / maxEnergy) : 0
@@ -256,39 +247,65 @@
     <script type="text/babel">
         const { useState, useRef, useEffect, useCallback } = React;
 
-        // --- 子组件：动态波带游戏区 ---
         const RibbonGameArea = ({ mediaRef, beatmapData, isPlaying }) => {
             const canvasRef = useRef(null);
             const reqRef = useRef(null);
             const { onsets, envelope } = beatmapData;
             
-            // 状态
             const [score, setScore] = useState(0);
             const [combo, setCombo] = useState(0);
-            const [expressScore, setExpressScore] = useState(0); // 表现力附加分
+            const [expressScore, setExpressScore] = useState(0);
             const [judgement, setJudgement] = useState({ text: '', type: '', id: 0 });
             
-            // 音频处理
             const micCtxRef = useRef(null);
             const analyserRef = useRef(null);
             const isMicReady = useRef(false);
 
-            // 内部高性能状态
             const gs = useRef({
                 lastJudgedIndex: -1,
                 cooldownUntil: 0,
-                speed: 0.3, // 像素/毫秒
+                speed: 0.3, 
                 judgementLineX: 0,
-                playerMaxVolHistory: 0.01, // 玩家历史最高音量(用于归一化光球大小)
-                currentPlayerVol: 0 // 当前相对音量 0-1
+                playerMaxVolHistory: 0.01,
+                currentPlayerVol: 0 
             });
 
             const THRESHOLD = 0.1; 
             const PERFECT_WIN = 100;
             const GREAT_WIN = 200;   
             const COOLDOWN = 120;
-            const RIBBON_BASE_HEIGHT = 10; // 波带最窄厚度
-            const RIBBON_MAX_HEIGHT = 80;  // 波带最宽厚度扩展
+            const RIBBON_BASE_HEIGHT = 10; 
+            const RIBBON_MAX_HEIGHT = 80;  
+
+            useEffect(() => {
+                const media = mediaRef.current;
+                if (!media) return;
+
+                const handleSeek = () => {
+                    const currentTime = media.currentTime * 1000;
+                    
+                    if (currentTime < 100) {
+                        setScore(0);
+                        setCombo(0);
+                        setExpressScore(0);
+                    }
+                    
+                    let newIndex = -1;
+                    for (let i = 0; i < onsets.length; i++) {
+                        if (onsets[i] < currentTime - GREAT_WIN) {
+                            newIndex = i; 
+                        } else {
+                            break;
+                        }
+                    }
+                    gs.current.lastJudgedIndex = newIndex;
+                    gs.current.cooldownUntil = 0;
+                    setJudgement({ text: '', type: '', id: Date.now() }); 
+                };
+
+                media.addEventListener('seeked', handleSeek);
+                return () => media.removeEventListener('seeked', handleSeek);
+            }, [onsets]);
 
             useEffect(() => {
                 const initMic = async () => {
@@ -297,7 +314,6 @@
                         micCtxRef.current = new (window.AudioContext || window.webkitAudioContext)();
                         analyserRef.current = micCtxRef.current.createAnalyser();
                         analyserRef.current.fftSize = 256;
-                        // 增加一点平滑度，让光球变化不至于太突兀
                         analyserRef.current.smoothingTimeConstant = 0.6; 
                         const source = micCtxRef.current.createMediaStreamSource(stream);
                         source.connect(analyserRef.current);
@@ -325,7 +341,6 @@
                 gs.current.judgementLineX = width * 0.2; 
                 const { judgementLineX, speed, lastJudgedIndex } = gs.current;
 
-                // --- 1. 获取麦克风力度并归一化 ---
                 const bufferLength = analyserRef.current.frequencyBinCount;
                 const dataArray = new Float32Array(bufferLength);
                 analyserRef.current.getFloatTimeDomainData(dataArray);
@@ -334,18 +349,15 @@
                 for (let i = 0; i < bufferLength; i++) sum += dataArray[i] * dataArray[i];
                 let rms = Math.sqrt(sum / bufferLength);
 
-                // 动态更新玩家的历史最大音量 (缓慢衰减以适应演奏变化)
                 if (rms > gs.current.playerMaxVolHistory) {
                     gs.current.playerMaxVolHistory = rms;
                 } else {
-                    gs.current.playerMaxVolHistory *= 0.9995; // 极缓慢衰减
+                    gs.current.playerMaxVolHistory *= 0.9995; 
                 }
                 
-                // 计算当前的相对力度 (0.0 - 1.0)
                 let relativeVol = gs.current.playerMaxVolHistory > 0 ? (rms / gs.current.playerMaxVolHistory) : 0;
-                gs.current.currentPlayerVol = Math.min(1, relativeVol * 1.5); // 稍微放大以增强视觉反馈
+                gs.current.currentPlayerVol = Math.min(1, relativeVol * 1.5); 
 
-                // --- 2. 节奏与力度双重判定 ---
                 if (rms > THRESHOLD && performance.now() > gs.current.cooldownUntil) {
                     let minDiff = Infinity;
                     let targetIndex = -1;
@@ -359,7 +371,6 @@
                         gs.current.lastJudgedIndex = targetIndex;
                         gs.current.cooldownUntil = performance.now() + COOLDOWN;
                         
-                        // 获取名师在当前时间点的力度预期
                         let expectedIntensity = 0;
                         for(let i=0; i<envelope.length; i++) {
                             if(envelope[i].time > currentTime) {
@@ -368,10 +379,9 @@
                             }
                         }
 
-                        // 计算力度吻合度 (差值越小，得分越高)
                         let intensityDiff = Math.abs(gs.current.currentPlayerVol - expectedIntensity);
                         let expressBonus = 0;
-                        if(intensityDiff < 0.2) expressBonus = 50; // 力度极度吻合
+                        if(intensityDiff < 0.2) expressBonus = 50; 
                         else if(intensityDiff < 0.4) expressBonus = 20;
 
                         if (minDiff <= PERFECT_WIN) {
@@ -390,10 +400,8 @@
                     }
                 }
 
-                // --- 3. 渲染画面 ---
                 ctx.clearRect(0, 0, width, height);
 
-                // 画判定线 (发光效果)
                 ctx.shadowBlur = 15;
                 ctx.shadowColor = 'rgba(255, 215, 0, 0.6)';
                 ctx.beginPath();
@@ -402,18 +410,15 @@
                 ctx.strokeStyle = 'rgba(255, 215, 0, 0.8)';
                 ctx.lineWidth = 3;
                 ctx.stroke();
-                ctx.shadowBlur = 0; // 重置阴影
+                ctx.shadowBlur = 0; 
 
-                // A. 绘制名师的“能量波带” (Bezier Curve)
                 ctx.beginPath();
-                // 寻找在屏幕内可见的包络节点
                 let visibleEnv = envelope.filter(pt => {
                     const x = (pt.time - currentTime) * speed + judgementLineX;
                     return x > -100 && x < width + 100;
                 });
 
                 if (visibleEnv.length > 1) {
-                    // 绘制上半部分曲线
                     ctx.moveTo((visibleEnv[0].time - currentTime) * speed + judgementLineX, centerY - (RIBBON_BASE_HEIGHT + visibleEnv[0].intensity * RIBBON_MAX_HEIGHT));
                     for (let i = 1; i < visibleEnv.length - 1; i++) {
                         const xc = (visibleEnv[i].time - currentTime) * speed + judgementLineX;
@@ -425,7 +430,6 @@
                         ctx.quadraticCurveTo(xc, yc, midX, midY);
                     }
                     
-                    // 连到右边缘，然后画下半部分曲线 (镜像反转)
                     const lastPt = visibleEnv[visibleEnv.length-1];
                     const lastX = (lastPt.time - currentTime) * speed + judgementLineX;
                     ctx.lineTo(lastX, centerY + (RIBBON_BASE_HEIGHT + lastPt.intensity * RIBBON_MAX_HEIGHT));
@@ -442,10 +446,9 @@
                     ctx.lineTo((visibleEnv[0].time - currentTime) * speed + judgementLineX, centerY + (RIBBON_BASE_HEIGHT + visibleEnv[0].intensity * RIBBON_MAX_HEIGHT));
                     
                     ctx.closePath();
-                    // 波带渐变填充
                     const gradient = ctx.createLinearGradient(0, 0, width, 0);
-                    gradient.addColorStop(0, 'rgba(100, 200, 255, 0.1)'); // 左侧稍暗
-                    gradient.addColorStop(0.2, 'rgba(100, 200, 255, 0.4)'); // 判定线附近最亮
+                    gradient.addColorStop(0, 'rgba(100, 200, 255, 0.1)'); 
+                    gradient.addColorStop(0.2, 'rgba(100, 200, 255, 0.4)'); 
                     gradient.addColorStop(1, 'rgba(100, 200, 255, 0.1)');
                     ctx.fillStyle = gradient;
                     ctx.fill();
@@ -454,7 +457,6 @@
                     ctx.stroke();
                 }
 
-                // B. 绘制音符核心点 (在波带中间)
                 for (let i = lastJudgedIndex + 1; i < onsets.length; i++) {
                     const noteTime = onsets[i];
                     const x = (noteTime - currentTime) * speed + judgementLineX;
@@ -474,26 +476,24 @@
                     }
                 }
 
-                // C. 绘制玩家的“能量光束” (在判定线位置，随音量跳动)
                 const playerBallRadius = 8 + (gs.current.currentPlayerVol * RIBBON_MAX_HEIGHT);
                 ctx.beginPath();
                 ctx.arc(judgementLineX, centerY, playerBallRadius, 0, Math.PI * 2);
                 
-                // 根据力度是否溢出/过小改变颜色
                 if(gs.current.currentPlayerVol > 0.8) {
-                    ctx.fillStyle = 'rgba(255, 100, 100, 0.8)'; // 太大声泛红
+                    ctx.fillStyle = 'rgba(255, 100, 100, 0.8)'; 
                     ctx.shadowColor = 'rgba(255, 100, 100, 1)';
                 } else if (gs.current.currentPlayerVol < 0.2) {
-                    ctx.fillStyle = 'rgba(150, 150, 150, 0.5)'; // 太小声灰暗
+                    ctx.fillStyle = 'rgba(150, 150, 150, 0.5)'; 
                     ctx.shadowColor = 'rgba(150, 150, 150, 0.5)';
                 } else {
-                    ctx.fillStyle = 'rgba(255, 215, 0, 0.9)'; // 正常金光
+                    ctx.fillStyle = 'rgba(255, 215, 0, 0.9)'; 
                     ctx.shadowColor = 'rgba(255, 215, 0, 1)';
                 }
                 
                 ctx.shadowBlur = 15;
                 ctx.fill();
-                ctx.shadowBlur = 0; // reset
+                ctx.shadowBlur = 0; 
 
                 reqRef.current = requestAnimationFrame(loop);
             }, [onsets, envelope]);
@@ -532,7 +532,6 @@
             );
         };
 
-        // --- 主应用组件 ---
         function App() {
             const mediaRef = useRef(null);
             const workerRef = useRef(null);
@@ -624,8 +623,12 @@
             const fetchAIAdvice = async () => {
                 if (!pieceName) return;
                 setIsAiLoading(true); setAiResponse('');
-                const apiKey = ""; // API Key 占位符
+                const apiKey = "AIzaSyAhrH608Mcr9xMlRvFpF5IMM36db2ea5NU"; 
                 
+                // 【核心修改】将模型指定为标准的 gemini-2.5-flash，解决地区访问权限或预览模型受限问题
+                const modelName = "gemini-2.5-flash"; 
+                const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
+
                 const prompt = `你是一位资深琵琶教育家。你的学生正练习《${pieceName}》。
 请返回JSON格式：
 1. advice: 300字左右的专业课前指导寄语（含简介、技巧提示、情感启发）。
@@ -633,14 +636,21 @@
 3. recommendedMinGap: 推荐的音符最小间隔 (20-150ms)。`;
 
                 try {
-                    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`, {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    const res = await fetch(url, {
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             contents: [{ parts: [{ text: prompt }] }],
                             generationConfig: { responseMimeType: "application/json" }
                         })
                     });
-                    if (!res.ok) throw new Error('网络异常');
+                    
+                    // 【核心修改】捕获详细的 HTTP 错误码
+                    if (!res.ok) {
+                        const errData = await res.json().catch(() => ({}));
+                        throw new Error(`网络或授权异常 (状态码: ${res.status}) ${errData.error?.message || ''}`);
+                    }
+                    
                     const data = await res.json();
                     const jsonStr = data.candidates[0].content.parts[0].text;
                     const parsed = JSON.parse(jsonStr);
@@ -650,7 +660,12 @@
                     setAiHasSuggested(true);
                     addLog(`✨ AI 调参 -> 灵敏度: ${parsed.recommendedSensitivity}, 间隔: ${parsed.recommendedMinGap}ms`);
                 } catch (err) {
-                    setAiResponse(`AI 老师走神了：${err.message}`);
+                    // 更直观的报错提示，帮助判断是否被网络防火墙阻挡
+                    if (err.message.includes('Failed to fetch') || err.message.includes('NetworkError')) {
+                        setAiResponse(`网络连接失败！因为 Google 的服务器在国内无法直接访问。请检查你的设备是否已经开启了全局科学上网代理（Global Proxy）。`);
+                    } else {
+                        setAiResponse(`AI 老师遇到了一点小麻烦：${err.message}`);
+                    }
                     addLog(`⚠️ AI 调参失败: ${err.message}`);
                 } finally { setIsAiLoading(false); }
             };
@@ -663,7 +678,7 @@
                         </div>
 
                         <div className="controls-row">
-                            <input type="file" accept="video/*, audio/*" onChange={handleFileUpload} ref={fileInputRef} style={{display: 'none'}} />
+                            <input type="file" accept="video/*, audio/*, .mp3, .mp4, .wav, .m4a, .mov, .aac" onChange={handleFileUpload} ref={fileInputRef} style={{display: 'none'}} />
                             <button onClick={() => fileInputRef.current.click()}>📂 1. 加载练习曲目 (视/音频)</button>
                         </div>
                         
@@ -689,7 +704,10 @@
 
                         {fileInfo.url && (
                             <div className="media-container">
-                                {fileInfo.type === 'video' ? <video ref={mediaRef} src={fileInfo.url} controls controlsList="nodownload" /> : <audio ref={mediaRef} src={fileInfo.url} controls />}
+                                {fileInfo.type === 'video' ? 
+                                    <video ref={mediaRef} src={fileInfo.url} controls controlsList="nodownload" playsInline={true} webkit-playsinline="true" x5-playsinline="true" x5-video-player-type="h5" x5-video-player-fullscreen="false" /> 
+                                    : <audio ref={mediaRef} src={fileInfo.url} controls />
+                                }
                             </div>
                         )}
 
